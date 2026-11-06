@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pet Finds</title><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#fcfcfc"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Pet Finds"><link rel="apple-touch-icon" href="./icon-180.png">
+<title>Pet Finds</title>
 <script>/* phone column count (1/2/3) before first paint */
 try { document.documentElement.dataset.cols = localStorage.getItem('petfinds_cols') || '2'; }
 catch (e) { document.documentElement.dataset.cols = '2'; }</script>
@@ -48,7 +48,6 @@ header.hide { transform: translateY(calc(-100% - 2px)); }
 h1 { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: .04em; }
 .count { color: var(--ink-2); }
 .spent { margin-left: auto; flex: none; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
-.offline-status { flex: none; font-size: 11px; color: var(--ink-2); white-space: nowrap; }
 .cost { color: var(--ink-2); }
 input[type=search] {
   flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
@@ -402,7 +401,20 @@ button.tag:hover { color: var(--ink); }
 body { -webkit-tap-highlight-color: transparent; }
 header { padding-top: calc(18px + env(safe-area-inset-top)); }
 #status { bottom: calc(24px + env(safe-area-inset-bottom)); }
-.seg { display: none; }
+/* [layout toggle | starred filter]: one grey pill; the layout toggle is phone-only */
+.tools { flex: none; display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--tile); }
+.tool {
+  display: inline-grid; place-items: center; width: 30px; height: 26px; border-radius: 999px;
+  color: var(--ink-2); touch-action: manipulation;
+  transition: color .25s var(--ease), background .25s var(--ease), box-shadow .25s var(--ease), transform .2s var(--ease);
+}
+.tool:hover { color: var(--ink); }
+.tool:active { transform: scale(.94); }
+.tool svg { display: block; }
+#colbtn { display: none; }
+#starbtn svg { fill: transparent; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; transition: fill .3s var(--ease); }
+#starbtn.on { color: var(--ink); background: var(--bg-a); box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.03); }
+#starbtn.on svg { fill: currentColor; }
 .find { scroll-margin-top: 76px; }
 @media (pointer: coarse) {
   .tag, button.tag { padding: 5px 12px; }
@@ -415,20 +427,10 @@ header { padding-top: calc(18px + env(safe-area-inset-top)); }
   /* 16px stops iOS zooming into a focused field */
   #q, #tagq, #tq, .tag-in { font-size: 16px; }
   #tagq { width: 128px; padding-right: 14px; }
-  .seg {
-    display: inline-flex; margin-left: auto; gap: 2px; padding: 3px; border-radius: 999px;
-    background: var(--tile);
-  }
-  .seg-cell {
-    display: inline-grid; place-items: center; width: 30px; height: 26px; border-radius: 999px;
-    color: var(--ink-2); touch-action: manipulation;
-    transition: color .25s var(--ease), background .25s var(--ease), box-shadow .25s var(--ease), transform .2s var(--ease);
-  }
-  .seg-cell:active { transform: scale(.94); }
-  .seg-cell.on { color: var(--ink); background: var(--bg-a); box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.03); }
+  .tools { margin-left: auto; }
+  #colbtn { display: inline-grid; }
   main { gap: 16px; padding: 16px 16px 48px; grid-template-columns: minmax(0, 1fr); }
   html[data-cols="2"] main { gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  html[data-cols="3"] main { gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   /* Long text folds on a phone; tap the card to read it all. */
   .find:not(.open):not(.editing) .notes, .find:not(.open):not(.editing) .summary:not(.summary-extra) {
     display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
@@ -442,10 +444,6 @@ header { padding-top: calc(18px + env(safe-area-inset-top)); }
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     font-size: 12px; line-height: 17px;
   }
-  html[data-cols="3"] .find:not(.open):not(.editing) { border-radius: 12px; }
-  html[data-cols="3"] .find:not(.open):not(.editing) .body { padding: 7px 8px 9px; }
-  html[data-cols="3"] .find:not(.open):not(.editing) .pname { font-size: 11px; line-height: 15px; }
-  html[data-cols="3"] .find:not(.open):not(.editing) .pimg { border-radius: 8px; right: 6px; bottom: 6px; }
   html:not([data-cols="1"]) .find:not(.open):not(.editing) .star { top: 8px; left: 8px; width: 24px; height: 24px; }
   .find.open, .find.editing { grid-column: 1 / -1; }
   .find.open .body > * { animation: rise .5s var(--ease) both; }
@@ -462,7 +460,6 @@ header { padding-top: calc(18px + env(safe-area-inset-top)); }
 <body>
 <header id="bar">
   <h1>Pet Finds <span class="count" id="count"></span></h1>
-  <span class="offline-status" id="offlineStatus" hidden>Offline ready</span>
   <span class="spent" id="spent"></span>
 </header>
 <nav class="cats" id="cats">
@@ -470,10 +467,9 @@ header { padding-top: calc(18px + env(safe-area-inset-top)); }
     <span id="catpill"></span>
     <input type="search" id="tagq" placeholder="find a tag" autocomplete="off" aria-label="Search tags" aria-haspopup="dialog">
   </div>
-  <div class="seg" id="colseg" role="group" aria-label="Cards per row">
-    <button class="seg-cell" data-cols="1" aria-label="One per row"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="10" height="10" rx="2.5"/></svg></button>
-    <button class="seg-cell" data-cols="2" aria-label="Two per row"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="3" width="4.6" height="8" rx="1.6"/><rect x="7.9" y="3" width="4.6" height="8" rx="1.6"/></svg></button>
-    <button class="seg-cell" data-cols="3" aria-label="Three per row"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="3.5" width="3.2" height="7" rx="1.2"/><rect x="5.4" y="3.5" width="3.2" height="7" rx="1.2"/><rect x="9.8" y="3.5" width="3.2" height="7" rx="1.2"/></svg></button>
+  <div class="tools" id="tools">
+    <button class="tool" id="colbtn" aria-label="Cards per row"></button>
+    <button class="tool" id="starbtn" aria-pressed="false" aria-label="Show starred only" title="Starred only"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.7l1.95 3.95 4.35.63-3.15 3.07.74 4.34L8 11.64l-3.89 2.05.74-4.34L1.7 6.28l4.35-.63z"/></svg></button>
   </div>
   <input type="search" id="q" placeholder="search all finds: products, brands, words said…" autocomplete="off" aria-label="Search all finds">
 </nav>
@@ -701,7 +697,7 @@ function render() {
   const shown = finds.filter(f => editing.has(f.id) ||
     ((only ? only.includes(f.id) : inCat(f, cat)) && (!term || haystack(f).includes(term))));
   grid.innerHTML = shown.length ? shown.map(card).join('')
-    : `<p class="empty">${finds.length ? 'Nothing matches.' : 'No finds yet. Turn on REC (right-click the pet), then hold ⌥R on a YouTube video.'}</p>`;
+    : `<p class="empty">${finds.length ? (cat === STAR && !only ? 'Nothing starred yet.' : 'Nothing matches.') : 'No finds yet. Turn on REC (right-click the pet), then hold ⌥R on a YouTube video.'}</p>`;
   grid.querySelectorAll('.find.editing [data-k], .find.editing [data-p], .find.editing [data-tg]').forEach(el => {
     el.contentEditable = 'plaintext-only';
   });
@@ -710,6 +706,9 @@ function render() {
   const spent = document.getElementById('spent');
   spent.textContent = usage.since ? money(usage.total) + ' spent since ' + day(usage.since) : '';
   spent.title = 'Every Claude call the pet has made since tracking began, including tests and deleted cards';
+  const starOn = !only && cat === STAR;
+  starbtn.classList.toggle('on', starOn);
+  starbtn.setAttribute('aria-pressed', starOn);
   // One button names the current filter; it opens the tag modal.
   const filtered = only || cat !== 'all';
   const hasTags = !!only || categories().length > 2;
@@ -1295,20 +1294,27 @@ function closeTags() {
   setTimeout(() => { if (!modal.classList.contains('open')) modal.hidden = true; }, 400);
   modalOpener?.focus?.({preventScroll: true});
 }
-// ---- Phone: 1, 2 or 3 cards per row (remembered on this device) ----
-const colseg = document.getElementById('colseg');
+// ---- Phone: one or two cards per row (remembered on this device); the icon shows the current one ----
+const colbtn = document.getElementById('colbtn'), starbtn = document.getElementById('starbtn');
+const COL_ICONS = {
+  1: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="10" height="10" rx="2.5"/></svg>',
+  2: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="3" width="4.6" height="8" rx="1.6"/><rect x="7.9" y="3" width="4.6" height="8" rx="1.6"/></svg>',
+};
 function setCols(n) {
-  n = [1, 2, 3].includes(+n) ? +n : 2;
+  n = +n === 1 ? 1 : 2;
   document.documentElement.dataset.cols = n;
   try { localStorage.setItem('petfinds_cols', n); } catch (e) {}
-  colseg.querySelectorAll('[data-cols]').forEach(b => b.classList.toggle('on', +b.dataset.cols === n));
+  colbtn.innerHTML = COL_ICONS[n];
+  colbtn.setAttribute('aria-label', n === 1 ? 'One per row: show two' : 'Two per row: show one');
+  colbtn.title = n === 1 ? 'Two per row' : 'One per row';
 }
 setCols(document.documentElement.dataset.cols);
 
 cats.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b) return;
-  if (b.dataset.cols) return setCols(b.dataset.cols);
+  if (b === colbtn) return setCols(document.documentElement.dataset.cols === '1' ? 2 : 1);
+  if (b === starbtn) return setCat(!only && cat === STAR ? 'all' : STAR);
   if (b.hasAttribute('data-open')) openTags(); else setCat(b.dataset.c);
 });
 modal.addEventListener('click', e => {
@@ -1345,11 +1351,6 @@ addEventListener('scroll', () => {
 }, {passive: true});
 
 render();
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js', {scope: './'}).then(() => navigator.serviceWorker.ready).then(() => {
-    document.getElementById('offlineStatus').hidden = false;
-  }).catch(() => {});
-}
 if (GH) {
   document.getElementById('sitefoot').hidden = false;
   signedIn(!!token);
