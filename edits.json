@@ -40,5 +40,13 @@
   "t": 1793955670254,
   "path": "/api/finds/Rrm0c0Ds7wg-616/delete",
   "body": {}
+ },
+ {
+  "id": "55d0d4d5-1a5c-41d7-b123-980d4cad5b89",
+  "t": 1793955671359,
+  "path": "/api/finds/yZLXNvsE58M-1722",
+  "body": {
+   "starred": true
+  }
  }
 ]
