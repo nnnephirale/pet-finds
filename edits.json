@@ -23,5 +23,13 @@
   "t": 1793955553884,
   "path": "/api/finds/KMpgu4k5mUE-2604/delete",
   "body": {}
+ },
+ {
+  "id": "5c7480e8-c88b-4df1-a23b-3eb527262651",
+  "t": 1793955557196,
+  "path": "/api/finds/KMpgu4k5mUE-365",
+  "body": {
+   "starred": true
+  }
  }
 ]
